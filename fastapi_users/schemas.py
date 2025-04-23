@@ -1,68 +1,36 @@
-import os
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
-from pydantic import BaseModel, ConfigDict, EmailStr
-from pydantic.version import VERSION as PYDANTIC_VERSION
+from pydantic.v1 import BaseModel, EmailStr
 
 from fastapi_users import models
 
-pydantic_v1_override = os.environ.get("FASTAPI_PYDANTIC_FORCE_V2", True)
-
-PYDANTIC_V2 = PYDANTIC_VERSION.startswith("2.")
-
-if PYDANTIC_V2:  # pragma: no cover
-    from pydantic.v1 import BaseModel as BaseModelV1
-    SCHEMA = TypeVar("SCHEMA", bound=BaseModelV1)
-
-    def model_dump(model: BaseModelV1, *args, **kwargs) -> Dict[str, Any]:
-        return model.model_dump(*args, **kwargs)  # type: ignore
-
-    def model_validate(schema: Type[SCHEMA], obj: Any, *args, **kwargs) -> SCHEMA:
-        return schema.model_validate(obj, *args, **kwargs)  # type: ignore
-
-    class CreateUpdateDictModel(BaseModelV1):
-        def create_update_dict(self):
-            return model_dump(
-                self,
-                exclude_unset=True,
-                exclude={
-                    "id",
-                    "is_superuser",
-                    "is_active",
-                    "is_verified",
-                    "oauth_accounts",
-                },
-            )
-
-        def create_update_dict_superuser(self):
-            return model_dump(self, exclude_unset=True, exclude={"id"})
+SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
 
 
-else:  # pragma: no cover  # type: ignore
-    SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
-    def model_dump(model: BaseModel, *args, **kwargs) -> Dict[str, Any]:
-        return model.dict(*args, **kwargs)  # type: ignore
-
-    def model_validate(schema: Type[SCHEMA], obj: Any, *args, **kwargs) -> SCHEMA:
-        return schema.from_orm(obj)  # type: ignore
+def model_dump(model: BaseModel, *args, **kwargs) -> Dict[str, Any]:
+    return model.dict(*args, **kwargs)  # type: ignore
 
 
-    class CreateUpdateDictModel(BaseModel):
-        def create_update_dict(self):
-            return model_dump(
-                self,
-                exclude_unset=True,
-                exclude={
-                    "id",
-                    "is_superuser",
-                    "is_active",
-                    "is_verified",
-                    "oauth_accounts",
-                },
-            )
+def model_validate(schema: Type[SCHEMA], obj: Any, *args, **kwargs) -> SCHEMA:
+    return schema.from_orm(obj)  # type: ignore
 
-        def create_update_dict_superuser(self):
-            return model_dump(self, exclude_unset=True, exclude={"id"})
+
+class CreateUpdateDictModel(BaseModel):
+    def create_update_dict(self):
+        return model_dump(
+            self,
+            exclude_unset=True,
+            exclude={
+                "id",
+                "is_superuser",
+                "is_active",
+                "is_verified",
+                "oauth_accounts",
+            },
+        )
+
+    def create_update_dict_superuser(self):
+        return model_dump(self, exclude_unset=True, exclude={"id"})
 
 
 class BaseUser(CreateUpdateDictModel, Generic[models.ID]):

@@ -2,8 +2,9 @@ from typing import List
 
 import motor.motor_asyncio
 from beanie import Document
+from pydantic.v1 import Field
+
 from fastapi_users.db import BaseOAuthAccount, BeanieBaseUser, BeanieUserDatabase
-from pydantic import Field
 
 DATABASE_URL = "mongodb://localhost:27017"
 client = motor.motor_asyncio.AsyncIOMotorClient(
