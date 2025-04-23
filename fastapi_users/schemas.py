@@ -20,6 +20,24 @@ if PYDANTIC_V2:  # pragma: no cover
     def model_validate(schema: Type[SCHEMA], obj: Any, *args, **kwargs) -> SCHEMA:
         return schema.model_validate(obj, *args, **kwargs)  # type: ignore
 
+    class CreateUpdateDictModel(BaseModelV1):
+        def create_update_dict(self):
+            return model_dump(
+                self,
+                exclude_unset=True,
+                exclude={
+                    "id",
+                    "is_superuser",
+                    "is_active",
+                    "is_verified",
+                    "oauth_accounts",
+                },
+            )
+
+        def create_update_dict_superuser(self):
+            return model_dump(self, exclude_unset=True, exclude={"id"})
+
+
 else:  # pragma: no cover  # type: ignore
     SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
     def model_dump(model: BaseModel, *args, **kwargs) -> Dict[str, Any]:
@@ -29,22 +47,22 @@ else:  # pragma: no cover  # type: ignore
         return schema.from_orm(obj)  # type: ignore
 
 
-class CreateUpdateDictModel(BaseModel):
-    def create_update_dict(self):
-        return model_dump(
-            self,
-            exclude_unset=True,
-            exclude={
-                "id",
-                "is_superuser",
-                "is_active",
-                "is_verified",
-                "oauth_accounts",
-            },
-        )
+    class CreateUpdateDictModel(BaseModel):
+        def create_update_dict(self):
+            return model_dump(
+                self,
+                exclude_unset=True,
+                exclude={
+                    "id",
+                    "is_superuser",
+                    "is_active",
+                    "is_verified",
+                    "oauth_accounts",
+                },
+            )
 
-    def create_update_dict_superuser(self):
-        return model_dump(self, exclude_unset=True, exclude={"id"})
+        def create_update_dict_superuser(self):
+            return model_dump(self, exclude_unset=True, exclude={"id"})
 
 
 class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
